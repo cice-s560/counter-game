@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
+
+    <script type="text/babel">
+
+
+    class RequestData extends React.Component {
+      state = {
+        value: ""
+      };
+
+      handleChange(e) {
+        e.preventDefault();
+
+        this.setState({value: e.target.value});
+      }
+
+      handleSubmit(e) {
+        e.preventDefault();
+        this.props.onSubmitName(this.state.value);
+      }
+
+      render() {
+        return(
+          <form >
+            <label>
+              Tu nombre:
+              <input type="text" value={this.state.value} onChange={(e) => this.handleChange(e)} />
+            </label>
+            <input type="submit" value="Submit" onClick={(e) => {this.handleSubmit(e)}}/>
+          </form>
+        );
+      }
+    }
+
+    class Counter extends React.Component {
+      constructor(props) {
+        super(props);
+
+        this.timer = null;
+        this.handleTime = this.handleTime.bind(this);
+      }
+
+      handleTime() {
+        this.props.onSecond();
+      }
+
+      render() {
+        if (this.props.started && this.props.time <= 0) {
+          clearInterval(this.timer);
+
+          this.timer = null;
+
+          this.props.onFinish();
+        }
+
+        if (this.props.finished) {
+          clearInterval(this.timer);
+          this.timer = null;
+        }
+
+        if (this.props.started && this.timer === null) {
+          this.timer = setInterval(this.handleTime, 1000);
+        }
+
+        return(
+          <span>{this.props.time}</span>
+        );
+      }
+    }
+
+
+    class Game extends React.Component {
+      state = {
+        clicks: 0,
+        time: 10,
+        currentTime: 0,
+        gameStarted: false,
+        finished: false,
+        result: false
+      };
+
+       clickButton() {
+         const futureClicks = this.state.clicks + 1;
+         const hasWon = this.checkGame(futureClicks);
+
+        this.setState({clicks: futureClicks});
+
+        if (hasWon) {
+          this.handleFinishCounter(hasWon);
+        }
+      }
+
+      checkGame(current) {
+        return current >= this.props.goal;
+      }
+
+      handleFinishCounter(hasWon) {
+        this.setState({gameStarted: false, finished: true, result: hasWon});
+      }
+
+      handleStartGame() {
+        this.setState({gameStarted: true, clicks: 0, currentTime: 0, finished: false});
+      }
+
+      handleTime() {
+        this.setState({currentTime: this.state.currentTime + 1});
+      }
+
+      render() {
+        return(
+          <div>
+            <h2>El reto de {this.props.player}</h2>
+            <p>Tienes <Counter
+                        started={this.state.gameStarted}
+                        finished={this.state.finished}
+                        time={this.state.time - this.state.currentTime}
+                        onFinish={() => this.handleFinishCounter(false)}
+                        onSecond={() => this.handleTime()}
+                      /> segundos para hacer 20 clicks.</p>
+            {!this.state.gameStarted && (
+              <button onClick={() => this.handleStartGame()}>Comienza el juego</button>
+            )}
+            {this.state.gameStarted && (
+              <button
+                type="submit" 
+                value="Click" 
+                onClick={() => {this.clickButton()}}
+              >
+                {this.state.clicks} clicks
+              </button>
+            )}
+            {!this.state.gameStarted && this.state.finished && !this.state.result && (
+              <p>Lo sentimos, pero has perdido la partida</p>
+            )}
+            {!this.state.gameStarted && this.state.finished && this.state.result && (
+              <p>Felicidades, has ganado la partida :)</p>
+            )}
+          </div>
+        );
+      }
+    }
+    
+
+
+class Intro extends React.Component {
+  state = {
+      submitted: false,
+      playerName: ""
+  };
+
+  handleNewName(newName) {
+    alert(`Hola ${newName}, ¿quieres jugar a un juego?`);
+    
+    this.setState({playerName: newName, submitted: true});
+  }
+
+  render() {
+    if (this.state.submitted === true) {
+      return <Game player={this.state.playerName} goal={20} />;
+    }
+
+    return <RequestData
+              onSubmitName={(newName) => this.handleNewName(newName)}
+           />;
+  }
+}
+
+
+ReactDOM.render(<Intro />, document.getElementById("root"));
+
+    </script>
+</body>
+</html>
